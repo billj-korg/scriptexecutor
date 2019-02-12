@@ -1,160 +1,237 @@
 #!/bin/sh
 
 #
-# Script executed at start
+# Wavest8 Updater Script executed at start
+#
+#	The target system will have a /Updater directory. The files for an
+#	update will be placed in a version subdirectory under /Updater. For instance, 
+#	/Updater/1.0.1/
+#	
+#		scp -pr <local dir> wavest8.local:/Updater
+#
+#		will be the command to create the version subdirectory followed by the files updater
+#		files. The updater files will consist of: 
+#
+#		/Updater/1.0.1/
+#			install.info (mandatory)
+#			pretar.sh (optional)
+#			rootfs.tgz (optional)
+#			MCU0 firmware image (optional)
+#			MCU1 firmware image (optional)
+#			Keyscan MCU firmware image (optional)
+#			posttar.sh (optional)
+#	
+#	Then, under /Updater will be a file pointing to the current intended version.
+#	/Updater/CurrentInstallSource
+#	
+#	That file will contain the path of the installer files intended to be installed.
+#	In the above example, it would simply contain "/Updater/1.0.1"
 #
 
-# Bail out on any error
-set -e
+MCU0UpdateImageName=mcu0.img
+MCU1UpdateImageName=mcu1.img
+KeyscannerUpdateImageName=keyscanner.img
+RootfsImageName=rootfs.tgz
+RootfsMountPoint=/rootfs
+BootMountPoint=$RootfsMountPoint/boot
+KorgMountPoint=$RootfsMountPoint/Korg
+EmmcBootPartition=/dev/mmcblk0p1
+EmmcRootFsPartition=/dev/mmcblk0p2
+EmmcKorgPartition=/dev/mmcblk0p3
+InstallSourcePathFile=$RootfsMountPoint/Korg/Updater/CurrentInstallSourcePath
+SerialDeviceName=/dev/ttyAMA0
+MCU0ResetPin=25
+MCU1ResetPin=27
+KeyScanResetPin=6
+MCU0BootPin=24
+MCU1BootPin=26
+KeyScanBootPin=23
 
+#----------------------------------------------------------
+# ReEnableNormalBoot()
+#----------------------------------------------------------
+ReEnableNormalBoot()
+{
+	# ensure we reboot from the normal partition the next time around.
+	echo "mounting boot partition"
+	mkdir /boot
+	mount /dev/mmcblk0p1 /boot 
+	echo "changing config.txt"
+	sed -i s/initramfs\ scriptexecute.img/#initramfs\ scriptexecute.img/ /boot/config.txt
+	sed -i s/kernel=\"kernel/#kernel=\"kernel/ /boot/config.txt
+}
+
+#----------------------------------------------------------
+# RestartSystem()
+#----------------------------------------------------------
+RestartSystem()
+{
+	echo "preparing to reboot"
+	sync
+	reboot
+}
+
+#----------------------------------------------------------
+# CheckUpdaterFiles()
+#	takes one argument. $1 = UpdatePath
+#----------------------------------------------------------
+CheckUpdaterFiles()
+{
+	InstallInfoFile=$1/install.info
+	if [ -e $InstallInfoFile ]; then
+		while read filename md5checksum
+		do
+			echo "$filename" " : " "$md5checksum"
+			fileToCheck=$1/$filename
+			echo "checking $fileToCheck..."
+			calculatedMd5=`md5sum $fileToCheck | awk '{print $1}'`
+			if [ "$calculatedMd5" != "$md5checksum" ]; then
+				echo "$filename checksum failure"
+				RestartSystem
+			fi
+		done < "$InstallInfoFile"
+	else
+		echo "install.info file in $UpdatePath not found."
+		RestartSystem
+	fi
+}
+
+#----------------------------------------------------------
+# InstallAllMCUFirmware()
+#	takes 1 arguments:	$1 = UpdatePath
+#----------------------------------------------------------
+# DEPRECATED - the MCU updates now happen from the normal rootfs after reboot from this update script
+InstallAllMCUFirmware()
+{
+	# usage: FlashPanelFirmware serialDevice resetPin bootPin imageFile
+
+	# Note that we start with the panel MCUs and finish with the keyscan MCU.
+	#	Since the keyscan MCU uses the same UART used for flashing the MCUs for 
+	#	its main communication, we hold it in reset while updating the others.
+	#	Once all of the updates are completed, we force the reset line back high.
+	#	(this is necessary since there is no guarantee that the keyscan firmware
+	#		will be updated here.)
+	SaveDir=`pwd`
+    cd /sys/class/gpio
+    echo 6 > export
+    cd gpio6
+    echo "out" > direction
+    echo 0 > value
+
+	# Update MCU0 if the MCU0 image file exists
+	mcu0ImageFile=$1/$MCU0UpdateImageName
+	if [ -e $mcu0ImageFile ]; then
+		echo "/bin/FlashPanelFirmware $SerialDeviceName $MCU0ResetPin $MCU0BootPin $mcu0ImageFile"
+		/bin/FlashPanelFirmware $SerialDeviceName $MCU0ResetPin $MCU0BootPin $mcu0ImageFile
+	fi
+
+	# Update MCU1 if the MCU1 image file exists
+	mcu1ImageFile=$1/$MCU1UpdateImageName
+	if [ -e $mcu1ImageFile ]; then
+		/bin/FlashPanelFirmware $SerialDeviceName $MCU1ResetPin $MCU1BootPin $mcu1ImageFile
+	fi
+
+	# Update Keyscanner MCU if the Keyscanner MCU image file exists
+	keyscannerImageFile=$1/$KeyscannerUpdateImageName
+	if [ -e $keyscannerImageFile ]; then
+		/bin/FlashPanelFirmware $SerialDeviceName $KeyScanResetPin $KeyScanBootPin $keyscannerImageFile
+	fi
+
+	# now bring the reset line of the keyscan MCU back high
+	sleep 1
+    echo "out" > direction
+    echo 1 > value
+	cd $SaveDir
+}
+
+
+#----------------------------------------------------------
+# Main body of the script
+#----------------------------------------------------------
 case "$1" in
   start)
-	SERIAL=`cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2`
-	MODEL=`cat /proc/device-tree/model`
-	MODEL_ESCAPED="${MODEL// /+}"
-	TEMP=`vcgencmd measure_temp`
-	TEMP=${TEMP:5}
 
-	#
-	# Parse kernel cmdline options (cmdline.txt)
-	#
-	for p in `cat /proc/cmdline`; do
-		if [ "${p%%=*}" == "script" ]; then
-			SCRIPT="${p#*=}"
-		fi
-		if [ "$p" == "usbipv6ll" ]; then
-			USBIPV6LL=true
-		fi
-		if [ "$p" == "readjumper" ]; then
-			READJUMPER=true
-		fi
-	done
+	# restore boot partition for normal boot
+	# Are there any conditions in which it makes more sense to wait to do this?
+	# Assuming not, we immediately update the boot partition such that it will boot normally
+	#	the next time the system is rebooted (either by power cycle, or the end of this process).
+	ReEnableNormalBoot
 
-	if [ -e /sys/class/leds/led0 ]; then
-		echo none > /sys/class/leds/led0/trigger
-		echo 0 > /sys/class/leds/led0/brightness
+	uname -a
+	sleep 3
+	ls -l /lib
+	ls -l /usr/lib
+
+	#make mount point directories and mount the emmc partition(s) to the mount point(s)
+	mkdir -p $RootfsMountPoint
+	mount $EmmcRootFsPartition $RootfsMountPoint
+		# check return code to make sure the mount succeeded
+		retVal=$?
+		if [ $retVal -ne 0 ]; then
+		    echo "Failed to mount the rootfs partition."
+		fi
+	mkdir -p $BootMountPoint
+	mount $EmmcBootPartition $BootMountPoint
+		# check return code to make sure the mount succeeded
+		retVal=$?
+		if [ $retVal -ne 0 ]; then
+		    echo "Failed to mount the boot partition within the rootfs mount point."
+		fi
+	mkdir -p $KorgMountPoint
+	mount $EmmcKorgPartition $KorgMountPoint
+		# check return code to make sure the mount succeeded
+		retVal=$?
+		if [ $retVal -ne 0 ]; then
+		    echo "Failed to mount the Korg partition within the rootfs mount point."
+		fi
+
+	# verify the existence of the CurrentInstallSourcePath file.
+	if [ ! -f $InstallSourcePathFile ]; then
+		echo "Required updater file $InstallSourcePathFile not found."
+		RestartSystem
 	fi
 
-	if [[ -n "$USBIPV6LL" ]]; then
-		# Pretend to be a USB Ethernet adapter, talking to host on IPv6 link-local address
-		GADGET=/sys/kernel/config/usb_gadget/g1
-		MAC="fa:${SERIAL:6:2}:${SERIAL:8:2}:${SERIAL:10:2}:${SERIAL:12:2}:${SERIAL:14:2}"
-		HOST_IPV6="fe80::f8${MAC:3:5}ff:fe${MAC:9:5}${MAC:15:2}%usb0"
-
-		mount -t configfs none /sys/kernel/config
-		mkdir -p $GADGET
-		(cd $GADGET
-		# FIXME: obtain proper USB ID instead of using f055 (FOSS)
-		echo 0xf055 > idVendor
-		echo 0x0002 > idProduct
-		mkdir strings/0x409
-		echo $SERIAL > strings/0x409/serialnumber
-		echo "Raspberry Pi" > strings/0x409/manufacturer
-		echo "CM provisioning" > strings/0x409/product
-		mkdir configs/c.1
-		mkdir configs/c.1/strings/0x409
-		echo "Config 1" > configs/c.1/strings/0x409/configuration
-		echo 500 > configs/c.1/MaxPower
-		#mkdir functions/acm.usb0
-		#ln -s functions/acm.usb0 configs/c.1
-		mkdir functions/ecm.usb0
-		echo $MAC > functions/ecm.usb0/host_addr
-		ln -s functions/ecm.usb0 configs/c.1
-		# Assuming there is only ever going to be one UDC
-		ls /sys/class/udc > UDC
-		)
-
-		echo
-		echo "IP configuration:"
-		echo
-		ifconfig usb0 add fe80::1/64 up
-		ifconfig -a
-		echo "My IPv6 is: fe80::1 / IPv6 of host is: ${HOST_IPV6}"
-		
-		sleep 2
-		
-		SCRIPT="${SCRIPT//\{server\}/[$HOST_IPV6]}"
-	else
-		# Expecting USB to switch to device mode and USB Ethernet adapter to be attached
-	
-		echo "Note: shell is available on tty2 for debugging purposes"
-		mount -t debugfs none /sys/kernel/debug || true
-		/sbin/getty -L tty2 0 vt100 &
-	
-		echo "Waiting for eth0 to appear"
-		while [ ! -e /sys/class/net/eth0 ]; do
-			sleep 1
-		done
-
-		ifconfig eth0 up
-		echo "Waiting for network link to go up"
-		while grep -q -v 1 /sys/class/net/eth0/carrier; do
-			sleep 1
-		done
-
-		echo "Obtaining DHCP lease"
-		udhcpc -i eth0
-	fi
-	
-	if [ "${SCRIPT%%:*}" == "http" ]; then
-		SCRIPT="${SCRIPT//\{model\}/$MODEL_ESCAPED}"
-		SCRIPT="${SCRIPT//\{serial\}/$SERIAL}"	
-		SCRIPT="${SCRIPT//\{temp\}/$TEMP}"
-		if [ -e /sys/block/mmcblk0/size ]; then
-			STORAGESIZE=`cat /sys/block/mmcblk0/size`
-		fi
-		SCRIPT="${SCRIPT//\{storagesize\}/$STORAGESIZE}"
-		if [ -e /sys/block/mmcblk0/device/cid ]; then
-                    CID=`cat /sys/block/mmcblk0/device/cid`
-		fi
-		SCRIPT="${SCRIPT//\{cid\}/$CID}"
-		if [ -e /sys/block/mmcblk0/device/csd ]; then
-                    CSD=`cat /sys/block/mmcblk0/device/csd`
-		fi
-		SCRIPT="${SCRIPT//\{csd\}/$CSD}"		
-		MEMORYSIZE=`grep MemTotal /proc/meminfo | awk '{print $2}'`
-		SCRIPT="${SCRIPT//\{memorysize\}/$MEMORYSIZE}"
-		if [ -e /sys/class/net/eth0/address ]; then
-			ETHMAC=`cat /sys/class/net/eth0/address`
-		fi
-		SCRIPT="${SCRIPT//\{mac\}/$ETHMAC}"
-                if [[ -n "$READJUMPER" ]]; then
-                        JUMPER=""
-                        for GPIO in 5 13 21
-                        do
-                            echo "$GPIO" >/sys/class/gpio/export
-                            GPIOVALUE=`cat /sys/class/gpio/gpio$GPIO/value`
-                            JUMPER="$JUMPER$GPIOVALUE"
-                        done
-                fi
-		SCRIPT="${SCRIPT//\{jumper\}/$JUMPER}"
-		
-		echo "Downloading script from $SCRIPT"
-		curl -g --retry 10 --retry-connrefused -o /tmp/script "$SCRIPT"
-		echo "Executing script"
-		sh /tmp/script
-	elif [[ -n "$SCRIPT" ]]; then
-		SHARE=${SCRIPT%/*}
-		FILENAME=`basename $SCRIPT`
-		
-		echo "Mounting NFS share $SHARE"
-		mount -t nfs -o nolock,ro $SHARE /mnt
-		echo "Executing script $FILENAME"
-		cd /mnt
-		sh $FILENAME
-		cd ..
-		echo "Unmounting NFS share"
-		umount /mnt
+	# verify the path contained within that file exists
+	UpdatePath=`awk '{print $1}' $InstallSourcePathFile`
+	UpdatePath="$RootfsMountPoint/Korg$UpdatePath"
+	if [ ! -d $UpdatePath ]; then
+		echo "Path to update files not found. $UpdatePath"
+		RestartSystem
 	fi
 
-	if [[ -z "$USBIPV6LL" ]]; then
-		echo "Releasing DHCP lease"
-		killall -SIGUSR2 udhcpc
-		sleep 1
+	# read install.info from that path, verify checksums of files contained in the 
+	#	install.info file (TODO: do sanity check of size requirements?)
+	CheckUpdaterFiles $UpdatePath
+
+	# run pretar.sh
+	if [ -e $UpdatePath/pretar.sh ]; then
+		sh $UpdatePath/pretar.sh
 	fi
-	
-	#halt
-        ;;
+
+	# untar the files
+	if [ -e $UpdatePath/rootfs.tgz ]; then
+		# how to do the big tar here. Can we do a progress bar?
+		echo "executing tar xzvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint"
+		tar xzvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint
+	fi
+
+	# run posttar.sh
+	if [ -e $UpdatePath/posttar.sh ]; then
+		sh $UpdatePath/posttar.sh
+	fi
+
+	# DEPRECATED -> install firmware with any provided firmware files.
+	#InstallAllMCUFirmware $UpdatePath
+	# ...
+	# We now place a breadcrumb in the update folder of the rootfs to trigger the
+	#	normal rootfs booted system to complete the task by updating the MCUs with
+	#	any provided MCU firmware images.
+	touch $UpdatePath/UpdateMCUs
+
+	# reboot.
+	RestartSystem
+    ;;
+
   stop)
 	;;
   *)
