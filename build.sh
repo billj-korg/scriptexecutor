@@ -2,7 +2,7 @@
 
 BUILDROOT=buildroot-2017.02
 # Supported targets: cm1 or cm3
-TARGET=cm1
+TARGET=cm3
 
 #
 # Extract the tarball containing the unmodified buildroot version 
