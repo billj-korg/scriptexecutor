@@ -19,3 +19,7 @@ The current working directory is set to where the share is mounted before the sc
 
 [Building and customizing scriptexecutor](https://github.com/raspberrypi/scriptexecutor/wiki/Building-and-customizing)
 
+## Korg Notes
+
+Within buildroot, run make busybox-menuconfig and enable gzip support for tar under the Archival
+Utilities menu.
