@@ -81,13 +81,15 @@ CheckUpdaterFiles()
 	if [ -e $InstallInfoFile ]; then
 		while read filename md5checksum
 		do
-			echo "$filename" " : " "$md5checksum"
-			fileToCheck=$1/$filename
-			echo "checking $fileToCheck..."
-			calculatedMd5=`md5sum $fileToCheck | awk '{print $1}'`
-			if [ "$calculatedMd5" != "$md5checksum" ]; then
-				echo "$filename checksum failure"
-				RestartSystem
+			if [ "$filename" != "VERSION" ]; then
+				echo "$filename" " : " "$md5checksum"
+				fileToCheck=$1/$filename
+				echo "checking $fileToCheck..."
+				calculatedMd5=`md5sum $fileToCheck | awk '{print $1}'`
+				if [ "$calculatedMd5" != "$md5checksum" ]; then
+					echo "$filename checksum failure"
+					RestartSystem
+				fi
 			fi
 		done < "$InstallInfoFile"
 	else
