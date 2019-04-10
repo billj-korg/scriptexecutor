@@ -81,7 +81,7 @@ CheckUpdaterFiles()
 	if [ -e $InstallInfoFile ]; then
 		while read filename md5checksum
 		do
-			if [ "$filename" != "VERSION" ]; then
+			if [ "$filename" != "VERSION" ] && [ "$filename" != "TIME_EST" ]; then
 				echo "$filename" " : " "$md5checksum"
 				fileToCheck=$1/$filename
 				echo "checking $fileToCheck..."
@@ -120,13 +120,6 @@ InstallAllMCUFirmware()
     echo "out" > direction
     echo 0 > value
 
-	# Update MCU0 if the MCU0 image file exists
-	mcu0ImageFile=$1/$MCU0UpdateImageName
-	if [ -e $mcu0ImageFile ]; then
-		echo "/bin/FlashPanelFirmware $SerialDeviceName $MCU0ResetPin $MCU0BootPin $mcu0ImageFile"
-		/bin/FlashPanelFirmware $SerialDeviceName $MCU0ResetPin $MCU0BootPin $mcu0ImageFile
-	fi
-
 	# Update MCU1 if the MCU1 image file exists
 	mcu1ImageFile=$1/$MCU1UpdateImageName
 	if [ -e $mcu1ImageFile ]; then
@@ -137,6 +130,14 @@ InstallAllMCUFirmware()
 	keyscannerImageFile=$1/$KeyscannerUpdateImageName
 	if [ -e $keyscannerImageFile ]; then
 		/bin/FlashPanelFirmware $SerialDeviceName $KeyScanResetPin $KeyScanBootPin $keyscannerImageFile
+	fi
+
+	# Update MCU0 if the MCU0 image file exists
+	# Make sure to update MCU0 last.
+	mcu0ImageFile=$1/$MCU0UpdateImageName
+	if [ -e $mcu0ImageFile ]; then
+		echo "/bin/FlashPanelFirmware $SerialDeviceName $MCU0ResetPin $MCU0BootPin $mcu0ImageFile"
+		/bin/FlashPanelFirmware $SerialDeviceName $MCU0ResetPin $MCU0BootPin $mcu0ImageFile
 	fi
 
 	# now bring the reset line of the keyscan MCU back high
@@ -228,6 +229,9 @@ case "$1" in
 	# We now place a breadcrumb in the update folder of the rootfs to trigger the
 	#	normal rootfs booted system to complete the task by updating the MCUs with
 	#	any provided MCU firmware images.
+	# We always set this breadcrumb regardless of whether any firmware images exist.
+	#	The reason for that is that it ensures that the MCUs will all be reset after
+	#	an update.
 	touch $UpdatePath/UpdateMCUs
 
 	# reboot.
