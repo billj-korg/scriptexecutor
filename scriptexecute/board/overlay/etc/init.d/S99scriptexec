@@ -28,9 +28,9 @@
 #	In the above example, it would simply contain "/Updater/1.0.1"
 #
 
-MCU0UpdateImageName=mcu0.img
-MCU1UpdateImageName=mcu1.img
-KeyscannerUpdateImageName=keyscanner.img
+MCU0UpdateImageName=Wavestate_Panel0Firmware.bin
+MCU1UpdateImageName=Wavestate_Panel1Firmware.bin
+KeyscannerUpdateImageName=Wavestate_KeyScannerFirmware.bin
 RootfsImageName=rootfs.tgz
 RootfsMountPoint=/rootfs
 BootMountPoint=$RootfsMountPoint/boot
@@ -214,8 +214,8 @@ case "$1" in
 	# untar the files
 	if [ -e $UpdatePath/rootfs.tgz ]; then
 		# how to do the big tar here. Can we do a progress bar?
-		echo "executing tar xzvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint"
-		tar xzvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint
+		echo "executing tar xvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint"
+		tar xvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint
 	fi
 
 	# run posttar.sh
