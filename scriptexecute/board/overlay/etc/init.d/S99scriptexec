@@ -56,6 +56,23 @@ ReEnableNormalBoot()
 	echo "mounting boot partition"
 	mkdir /boot
 	mount /dev/mmcblk0p1 /boot 
+	# double check in case the filesystem is slow to come up.
+	# 	If it doesn't come up on the 3rd try, that's bad news.
+	if [ ! -f /boot/config.txt ]; then
+		sleep 2
+		mount /dev/mmcblk0p1 /boot
+		echo "waited two seconds for the EMMC"
+		if [ ! -f /boot/config.txt ]; then
+			sleep 4
+			mount /dev/mmcblk0p1 /boot
+			echo "waited four more seconds for the EMMC"
+			if [ ! -f /boot/config.txt ]; then
+				sleep 4
+				mount /dev/mmcblk0p1 /boot
+				echo "waited four more seconds even for the EMMC"
+			fi
+		fi
+	fi
 	echo "changing config.txt"
 	sed -i s/initramfs\ scriptexecute.img/#initramfs\ scriptexecute.img/ /boot/config.txt
 	sed -i s/kernel=\"kernel/#kernel=\"kernel/ /boot/config.txt
@@ -158,10 +175,10 @@ case "$1" in
 	# Are there any conditions in which it makes more sense to wait to do this?
 	# Assuming not, we immediately update the boot partition such that it will boot normally
 	#	the next time the system is rebooted (either by power cycle, or the end of this process).
+	sleep 3
 	ReEnableNormalBoot
 
 	uname -a
-	sleep 3
 	ls -l /lib
 	ls -l /usr/lib
 
@@ -208,6 +225,7 @@ case "$1" in
 
 	# run pretar.sh
 	if [ -e $UpdatePath/pretar.sh ]; then
+		sh $UpdatePath/pretar.sh > $RootfsMountPoint/errOutput1 2>&1
 		sh $UpdatePath/pretar.sh
 	fi
 
@@ -220,6 +238,7 @@ case "$1" in
 
 	# run posttar.sh
 	if [ -e $UpdatePath/posttar.sh ]; then
+		sh $UpdatePath/posttar.sh > $RootfsMountPoint/errOutput2 2>&1
 		sh $UpdatePath/posttar.sh
 	fi
 
