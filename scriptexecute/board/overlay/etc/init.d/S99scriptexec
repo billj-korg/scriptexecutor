@@ -55,7 +55,7 @@ ReEnableNormalBoot()
 #----------------------------------------------------------
 RestartSystem()
 {
-	echo "preparing to reboot"
+	echo "preparing to reboot" >> /boot/updatelog
 	sync
 	reboot
 }
@@ -82,7 +82,7 @@ CheckUpdaterFiles()
 			fi
 		done < "$InstallInfoFile"
 	else
-		echo "install.info file in $1 not found." > /boot/update105log
+		echo "install.info file in $1 not found." >> /boot/updatelog
 		RestartSystem
 	fi
 }
@@ -107,44 +107,50 @@ case "$1" in
 		# check return code to make sure the mount succeeded
 		retVal=$?
 		if [ $retVal -ne 0 ]; then
-		    echo "Failed to mount the rootfs partition." > /boot/update105log
+		    echo "Failed to mount the rootfs partition." > /boot/updatelog
 		fi
 	mkdir -p $BootMountPoint
 	mount $EmmcBootPartition $BootMountPoint
 		# check return code to make sure the mount succeeded
 		retVal=$?
 		if [ $retVal -ne 0 ]; then
-		    echo "Failed to mount the boot partition within the rootfs mount point." >> /boot/update105log
+		    echo "Failed to mount the boot partition within the rootfs mount point." >> /boot/updatelog
 		fi
 	mkdir -p $KorgMountPoint
 	mount $EmmcKorgPartition $KorgMountPoint
 		# check return code to make sure the mount succeeded
 		retVal=$?
 		if [ $retVal -ne 0 ]; then
-		    echo "Failed to mount the Korg partition within the rootfs mount point." >> /boot/update105log
+		    echo "Failed to mount the Korg partition within the rootfs mount point." >> /boot/updatelog
 		fi
 
 	# read install.info from that path, verify checksums of files contained in the 
 	#	install.info file (TODO: do sanity check of size requirements?)
+	echo "about to check updater files." >> /boot/updatelog
 	CheckUpdaterFiles $UpdateContentPath
+	echo "done checking updater files." >> /boot/updatelog
 
 	# run pretar.sh
 	if [ -e $UpdateContentPath/pretar.sh ]; then
+		echo "running pretar." >> /boot/updatelog
 		sh $UpdateContentPath/pretar.sh > $RootfsMountPoint/errOutput1 2>&1
 		sh $UpdateContentPath/pretar.sh
+		echo "ran pretar." >> /boot/updatelog
 	fi
 
 	# untar the files
 	if [ -e $UpdateContentPath/rootfs.tgz ]; then
 		# how to do the big tar here. Can we do a progress bar?
-		echo "executing tar xvf $UpdateContentPath/rootfs.tgz -C $RootfsMountPoint"
+		echo "executing tar xvf $UpdateContentPath/rootfs.tgz -C $RootfsMountPoint" >> /boot/updatelog
 		tar xvf $UpdateContentPath/rootfs.tgz -C $RootfsMountPoint
 	fi
 
 	# run posttar.sh
 	if [ -e $UpdateContentPath/posttar.sh ]; then
+		echo "running posttar." >> /boot/updatelog
 		sh $UpdateContentPath/posttar.sh > $RootfsMountPoint/errOutput2 2>&1
 		sh $UpdateContentPath/posttar.sh
+		echo "ran posttar." >> /boot/updatelog
 	fi
 
 	# reboot.
