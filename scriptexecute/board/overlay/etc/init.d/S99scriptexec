@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-#	modwave Updater Script executed at start - this is a special version for installing
+#	modwave wavestate Script executed at start - this is a special version for installing
 #	via the sciptexecute image itself.
 #
 #	The tarball for the update will be under /etc here in this update's root filesystem.
