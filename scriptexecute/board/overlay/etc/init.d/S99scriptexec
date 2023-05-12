@@ -1,38 +1,19 @@
 #!/bin/sh
 
 #
-# SparkPi Updater Script executed at start
+#	SparkPi USBBoot mode updater Script executed at start - this is a special version for installing
+#	via the sciptexecute image itself.
 #
-#	The target system will have a /Updater directory. The files for an
-#	update will be placed in a version subdirectory under /Updater. For instance, 
-#	/Updater/1.0.1/
+#	The tarball for the update will be under /etc here in this update's root filesystem.
 #	
-#		scp -pr <local dir> wavest8.local:/Updater
-#
-#		will be the command to create the version subdirectory followed by the files updater
-#		files. The updater files will consist of: 
-#
-#		/Updater/1.0.1/
-#			install.info (mandatory)
-#			pretar.sh (optional)
-#			rootfs.tgz (optional)
-#			posttar.sh (optional)
-#	
-#	Then, under /Updater will be a file pointing to the current intended version.
-#	/Updater/CurrentInstallSource
-#	
-#	That file will contain the path of the installer files intended to be installed.
-#	In the above example, it would simply contain "/Updater/1.0.1"
-#
 
-RootfsImageName=rootfs.tgz
 RootfsMountPoint=/rootfs
 BootMountPoint=$RootfsMountPoint/boot
 KorgMountPoint=$RootfsMountPoint/Korg
 EmmcBootPartition=/dev/mmcblk0p1
 EmmcRootFsPartition=/dev/mmcblk0p2
 EmmcKorgPartition=/dev/mmcblk0p3
-InstallSourcePathFile=$RootfsMountPoint/Korg/Updater/CurrentInstallSourcePath
+UpdateContentPath=/etc/updatecontent
 
 #----------------------------------------------------------
 # ReEnableNormalBoot()
@@ -60,13 +41,13 @@ ReEnableNormalBoot()
 			fi
 		fi
 	fi
-	echo "changing config.txt"
-	cp /boot/config.txt /tmp/config.txt
-	sed -i s/initramfs\ updater-scriptexecute.img/#initramfs\ updater-scriptexecute.img/ /tmp/config.txt
-	sed -i s/kernel=\"updater-kernel/#kernel=\"updater-kernel/ /tmp/config.txt
-	sync
-	mv /tmp/config.txt /boot/config.txt
-	sync
+    echo "changing config.txt"
+    cp /boot/config.txt /tmp/config.txt
+    sed -i s/initramfs\ updater-scriptexecute.img/#initramfs\ updater-scriptexecute.img/ /tmp/config.txt
+    sed -i s/kernel=\"updater-kernel/#kernel=\"updater-kernel/ /tmp/config.txt
+    sync
+    mv /tmp/config.txt /boot/config.txt
+    sync
 }
 
 #----------------------------------------------------------
@@ -74,7 +55,7 @@ ReEnableNormalBoot()
 #----------------------------------------------------------
 RestartSystem()
 {
-	echo "preparing to reboot"
+	echo "preparing to reboot" >> /boot/updatelog
 	sync
 	reboot
 }
@@ -92,16 +73,16 @@ CheckUpdaterFiles()
 			if [ "$filename" != "VERSION" ] && [ "$filename" != "TIME_EST" ]; then
 				echo "$filename" " : " "$md5checksum"
 				fileToCheck=$1/$filename
-				echo "checking $fileToCheck..."
+				echo "checking $fileToCheck..." > /boot/updatelog
 				calculatedMd5=`md5sum $fileToCheck | awk '{print $1}'`
 				if [ "$calculatedMd5" != "$md5checksum" ]; then
-					echo "$filename checksum failure"
+					echo "$filename checksum failure" >> /boot/updatelog
 					RestartSystem
 				fi
 			fi
 		done < "$InstallInfoFile"
 	else
-		echo "install.info file in $UpdatePath not found."
+		echo "install.info file in $1 not found." >> /boot/updatelog
 		RestartSystem
 	fi
 }
@@ -120,71 +101,57 @@ case "$1" in
 	sleep 3
 	ReEnableNormalBoot
 
-	uname -a
-	ls -l /lib
-	ls -l /usr/lib
-
 	#make mount point directories and mount the emmc partition(s) to the mount point(s)
 	mkdir -p $RootfsMountPoint
 	mount $EmmcRootFsPartition $RootfsMountPoint
 		# check return code to make sure the mount succeeded
 		retVal=$?
 		if [ $retVal -ne 0 ]; then
-		    echo "Failed to mount the rootfs partition."
+		    echo "Failed to mount the rootfs partition." > /boot/updatelog
 		fi
 	mkdir -p $BootMountPoint
 	mount $EmmcBootPartition $BootMountPoint
 		# check return code to make sure the mount succeeded
 		retVal=$?
 		if [ $retVal -ne 0 ]; then
-		    echo "Failed to mount the boot partition within the rootfs mount point."
+		    echo "Failed to mount the boot partition within the rootfs mount point." >> /boot/updatelog
 		fi
 	mkdir -p $KorgMountPoint
 	mount $EmmcKorgPartition $KorgMountPoint
 		# check return code to make sure the mount succeeded
 		retVal=$?
 		if [ $retVal -ne 0 ]; then
-		    echo "Failed to mount the Korg partition within the rootfs mount point."
+		    echo "Failed to mount the Korg partition within the rootfs mount point." >> /boot/updatelog
 		fi
-
-	# verify the existence of the CurrentInstallSourcePath file.
-	if [ ! -f $InstallSourcePathFile ]; then
-		echo "Required updater file $InstallSourcePathFile not found."
-		RestartSystem
-	fi
-
-	# verify the path contained within that file exists
-	UpdatePath=`awk '{print $1}' $InstallSourcePathFile`
-	UpdatePath="$RootfsMountPoint/Korg$UpdatePath"
-	if [ ! -d $UpdatePath ]; then
-		echo "Path to update files not found. $UpdatePath"
-		RestartSystem
-	fi
 
 	# read install.info from that path, verify checksums of files contained in the 
 	#	install.info file (TODO: do sanity check of size requirements?)
-	CheckUpdaterFiles $UpdatePath
+	echo "about to check updater files." >> /boot/updatelog
+	CheckUpdaterFiles $UpdateContentPath
+	echo "done checking updater files." >> /boot/updatelog
 
 	# run pretar.sh
-	if [ -e $UpdatePath/pretar.sh ]; then
-		sh $UpdatePath/pretar.sh > $RootfsMountPoint/errOutput1 2>&1
-		sh $UpdatePath/pretar.sh
+	if [ -e $UpdateContentPath/pretar.sh ]; then
+		echo "running pretar." >> /boot/updatelog
+		sh $UpdateContentPath/pretar.sh > $RootfsMountPoint/errOutput1 2>&1
+		sh $UpdateContentPath/pretar.sh
+		echo "ran pretar." >> /boot/updatelog
 	fi
 
 	# untar the files
-	if [ -e $UpdatePath/rootfs.tgz ]; then
+	if [ -e $UpdateContentPath/rootfs.tgz ]; then
 		# how to do the big tar here. Can we do a progress bar?
-		echo "executing tar xvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint"
-		tar xvf $UpdatePath/rootfs.tgz -C $RootfsMountPoint
+		echo "executing tar xvf $UpdateContentPath/rootfs.tgz -C $RootfsMountPoint" >> /boot/updatelog
+		tar xvf $UpdateContentPath/rootfs.tgz -C $RootfsMountPoint
 	fi
 
 	# run posttar.sh
-	if [ -e $UpdatePath/posttar.sh ]; then
-		sh $UpdatePath/posttar.sh > $RootfsMountPoint/errOutput2 2>&1
-		sh $UpdatePath/posttar.sh
+	if [ -e $UpdateContentPath/posttar.sh ]; then
+		echo "running posttar." >> /boot/updatelog
+		sh $UpdateContentPath/posttar.sh > $RootfsMountPoint/errOutput2 2>&1
+		sh $UpdateContentPath/posttar.sh
+		echo "ran posttar." >> /boot/updatelog
 	fi
-
-	touch $UpdatePath/UpdateMCUs
 
 	# reboot.
 	RestartSystem
