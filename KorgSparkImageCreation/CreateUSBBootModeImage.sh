@@ -21,6 +21,7 @@ RootfsFilePath=""
 ReleaseString=""
 NewTarballMD5Sum=""
 RestoreZipFile=""
+ButtonsToHold=""
 
 # default the architecture to whatever is most common.
 Architecture="cm4"
@@ -108,7 +109,8 @@ CheckResources()
 
 	response=$?
 	case $response in
-		$DIALOG_CANCEL) exit -1;;
+		$DIALOG_ESC) exit -1;;
+		$DIALOG_CANCEL) exit -2;;
 	esac
 }
 
@@ -165,7 +167,7 @@ SelectProduct()
 
 	case $productSelectionMenuChoice in
 		1)
-			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters"
+			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm3"
 			SelectedProductName="Korg wavestate (CM3)"
 			XMLProductName="Korg wavestate"
 			UpdateRestoreFileName="Korg_wavestate_recovery_"
@@ -176,9 +178,10 @@ SelectProduct()
 			TargetUpdaterKernelFileName="kernel.img"
 			TargetUpdaterInitRamFSFileName="scriptexecute.img"
 			FactoryUpdateBootFilesZipFile="wavestateCM3FactoryUpdateBootFiles.zip"
+			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			;;
 		2)
-			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters"
+			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
 			SelectedProductName="wavestate mkII"
 			XMLProductName="wavestate mkII"
 			UpdateRestoreFileName="wavestate_mkII_recovery_"
@@ -186,9 +189,10 @@ SelectProduct()
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/wavestateMkII/bootRestoreWavestateMkII.zip"
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
+			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			;;
 		3)
-			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters"
+			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
 			SelectedProductName="wavestateSE_M"
 			XMLProductName="wavestate SE/module"
 			UpdateRestoreFileName="wavestate_SE_module_recovery_"
@@ -196,9 +200,10 @@ SelectProduct()
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/commonCM4/bootRestoreCM4.zip"
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
+			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			;;
 		4)
-			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters"
+			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm3"
 			SelectedProductName="modwaveCM3"
 			XMLProductName="Korg modwave"
 			UpdateRestoreFileName="Korg_modwave_recovery_"
@@ -207,9 +212,10 @@ SelectProduct()
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/modwaveCM3/bootRestoremodwaveCM3.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
+			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
 			;;
 		5)
-			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters"
+			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm4"
 			SelectedProductName="modwaveCM4"
 			XMLProductName="modwave mkII"
 			UpdateRestoreFileName="modwave_mkII_recovery_"
@@ -217,6 +223,7 @@ SelectProduct()
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
+			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
 			;;
 		6)
 			UpdatersFolder="$HOME/Development/Spark/Products/Mpx/Util/Updaters"
@@ -227,6 +234,7 @@ SelectProduct()
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/multipolyCM4/bootRestoremultipolyCM4.zip"
 			FactoryUpdateBootFilesZipFile="multipolyFactoryUpdateBootFiles.zip"
+			ButtonsToHold="UTIL"
 			;;
 		7)
 			UpdatersFolder="$HOME/Development/Spark/Products/Operator6/Util/Updaters"
@@ -272,11 +280,17 @@ ScanProductUpdatersDirectories()
 	done
 
 	dialog	--clear --backtitle "SparkPi Programmer App/Firmware tarball Creator" --title "Select ${SelectedProductName} Release:" \
-		--cancel-label "Back" \
+		--cancel-label "Cancel" \
 		--menu "" \
 		20 40 5 \
 		--file $RlsDirsFile \
 		2> $SelectedRlsFile
+
+	response=$?
+	case $response in
+		$DIALOG_ESC) exit -1;;
+		$DIALOG_CANCEL) exit -2;;
+	esac
 
 	# take the selected version number and update the strings we will use to access the rootfs
 	#	file and make the target tarball
@@ -459,10 +473,19 @@ CreateRestorePlusUpdateImage()
 
 	# now wrap the restoreBoot.zip in a zip with an xml info file. An example of the xml contents is:
 	#	<?xml version="1.0" encoding="UTF-8"?>
-	#		<VersionInfo product="Korg wavestate" version="3.0.9" architecture="cm3" checksum="c9aecc751d3eb8477262385e86cc1c7d"/>
+	#	
+	#	<VersionInfo
+	#		product="wavestate (original)"
+	#		incompatibleProducts="wavestate mkII, wavestate SE"
+	#		version="2.1.3"
+	#		architecture="cm3"
+	#		checksum="6456b894bccc957081d5ee00a4419f58"
+	#		buttonsToHoldAtStartup="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
+	#	/>
+
 	bootRestoreMD5=`md5sum restoreBoot.zip | awk '{print $1}'`
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > .versioninfo.xml
-	echo -e "\t<VersionInfo product=\"${XMLProductName}\" version=\"${ReleaseString}\" architecture=\"${Architecture}\" checksum=\"${bootRestoreMD5}\"/>" >> .versioninfo.xml
+	echo -e "<VersionInfo\n\tproduct=\"${XMLProductName}\"\n\tversion=\"${ReleaseString}\"\n\tarchitecture=\"${Architecture}\"\n\tchecksum=\"${bootRestoreMD5}\"\n\tbuttonsToHoldAtStartup=\"${ButtonsToHold}\"\n/>" >> .versioninfo.xml
 
 	cd ..
 	zip -r ${UpdateRestoreFileName}${ReleaseString}.zip $ReleaseString
