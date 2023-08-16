@@ -230,7 +230,7 @@ SelectProduct()
 			RestoreZipFile="$ResourcesDir/modwaveCM3/bootRestoremodwaveCM3.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
-			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
+			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
 			;;
 		6)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm4"
@@ -242,7 +242,7 @@ SelectProduct()
 			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
-			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
+			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
 			;;
 		7)
 			UpdatersFolder="$HOME/Development/Spark/Products/Mpx/Util/Updaters"
