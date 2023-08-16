@@ -22,6 +22,7 @@ ReleaseString=""
 NewTarballMD5Sum=""
 RestoreZipFile=""
 ButtonsToHold=""
+InstructionsImageFile=""
 
 # default the architecture to whatever is most common.
 Architecture="cm4"
@@ -149,12 +150,13 @@ SelectProduct()
 		20 40 5 \
 		"1" "wavestate CM3" \
 		"2" "wavestate mkII" \
-		"3" "wavestate SE/module" \
-		"4" "modwave CM3" \
-		"5" "modwave CM4" \
-		"6" "multipoly" \
-		"7" "opsix CM3" \
-		"8" "opsix mkII" \
+		"3" "wavestate SE" \
+		"4" "wavestate module" \
+		"5" "modwave CM3" \
+		"6" "modwave CM4" \
+		"7" "multipoly" \
+		"8" "opsix CM3" \
+		"9" "opsix mkII" \
 		2> $ProductSelectionFile
 
 	response=$?
@@ -170,7 +172,7 @@ SelectProduct()
 			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm3"
 			SelectedProductName="Korg wavestate (CM3)"
 			XMLProductName="Korg wavestate"
-			UpdateRestoreFileName="Korg_wavestate_recovery_"
+			UpdateRestoreFileName="Korg_wavestate_usbboot_"
 			Architecture="cm3"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdater_wavestateCM3"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExec_wavestateCM3"
@@ -179,83 +181,103 @@ SelectProduct()
 			TargetUpdaterInitRamFSFileName="scriptexecute.img"
 			FactoryUpdateBootFilesZipFile="wavestateCM3FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
+			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
 			;;
 		2)
 			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
 			SelectedProductName="wavestate mkII"
 			XMLProductName="wavestate mkII"
-			UpdateRestoreFileName="wavestate_mkII_recovery_"
+			UpdateRestoreFileName="wavestate_mkII_usbboot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/wavestateMkII/bootRestoreWavestateMkII.zip"
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
+			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
 			;;
 		3)
 			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
 			SelectedProductName="wavestateSE_M"
-			XMLProductName="wavestate SE/module"
-			UpdateRestoreFileName="wavestate_SE_module_recovery_"
+			XMLProductName="wavestate SE"
+			UpdateRestoreFileName="wavestate_SE_usbboot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/commonCM4/bootRestoreCM4.zip"
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
+			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
 			;;
 		4)
+			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
+			SelectedProductName="wavestateSE_M"
+			XMLProductName="wavestate module"
+			UpdateRestoreFileName="wavestate_module_usbboot_"
+			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
+			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
+			RestoreZipFile="$ResourcesDir/commonCM4/bootRestoreCM4.zip"
+			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
+			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
+			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
+			;;
+		5)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm3"
 			SelectedProductName="modwaveCM3"
 			XMLProductName="Korg modwave"
-			UpdateRestoreFileName="Korg_modwave_recovery_"
+			UpdateRestoreFileName="Korg_modwave_usbboot_"
 			Architecture="cm3"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/modwaveCM3/bootRestoremodwaveCM3.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
+			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
 			;;
-		5)
+		6)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm4"
 			SelectedProductName="modwaveCM4"
 			XMLProductName="modwave mkII"
-			UpdateRestoreFileName="modwave_mkII_recovery_"
+			UpdateRestoreFileName="modwave_mkII_usbboot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
+			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
 			;;
-		6)
+		7)
 			UpdatersFolder="$HOME/Development/Spark/Products/Mpx/Util/Updaters"
 			SelectedProductName="multipoly"
 			XMLProductName="multipoly"
-			UpdateRestoreFileName="multipoly_recovery_"
+			UpdateRestoreFileName="multipoly_usbboot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/multipolyCM4/bootRestoremultipolyCM4.zip"
 			FactoryUpdateBootFilesZipFile="multipolyFactoryUpdateBootFiles.zip"
 			ButtonsToHold="UTIL"
+			InstructionsImageFile="$ResourcesDir/images/multipolyUSBBootButtons.png"
 			;;
-		7)
+		8)
 			UpdatersFolder="$HOME/Development/Spark/Products/Operator6/Util/Updaters"
 			SelectedProductName="opsix CM3"
 			XMLProductName="Korg opsix"
-			UpdateRestoreFileName="Korg_opsix_recovery_"
+			UpdateRestoreFileName="Korg_opsix_usbboot_"
 			Architecture="cm3"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/opsixCM3/bootRestoreopsixCM3.zip"
 			FactoryUpdateBootFilesZipFile="opsixCM3FactoryUpdateBootFiles.zip"
+			InstructionsImageFile="$ResourcesDir/images/opsixUSBBootButtons.png"
 			;;
-		8)
+		9)
 			UpdatersFolder="$HOME/Development/Spark/Products/Operator6/Util/Updaters"
 			SelectedProductName="opsixMkII"
 			XMLProductName="opsix mkII"
-			UpdateRestoreFileName="opsix_mkII_recovery_"
+			UpdateRestoreFileName="opsix_mkII_usbboot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/opsixCM4/bootRestoreopsixCM4.zip"
 			FactoryUpdateBootFilesZipFile="opsixCM4FactoryUpdateBootFiles.zip"
+			InstructionsImageFile="$ResourcesDir/images/opsixUSBBootButtons.png"
 			;;
 	esac
 }
@@ -453,7 +475,6 @@ CreateRestorePlusUpdateImage()
 	#	build the updater kernel and its initramfs
 	cp $S99UpdateScriptFile $EtcSourcePath/S99scriptexecute
 
-	TargetZip=$PWD/output/$TargetFileName
 	pushd ..
 	sh build.sh
 
@@ -465,13 +486,16 @@ CreateRestorePlusUpdateImage()
 
 	# generate the update/restore payload
 	pushd $TempCreationFolder/$ReleaseString
-	zip -r restoreBoot.zip .
+	zip -r bootRestore.zip .
 	# clear out the rest of the contents for creating the final zip file.
-	mv restoreBoot.zip ..
+	mv bootRestore.zip ..
 	rm -fr *
-	mv ../restoreBoot.zip .
+	mv ../bootRestore.zip .
 
-	# now wrap the restoreBoot.zip in a zip with an xml info file. An example of the xml contents is:
+	# next to the bootRestore.zip file is also an image 
+	cp $InstructionsImageFile ./InstructionsImage.png 
+
+	# now wrap the bootRestore.zip in a zip with an xml info file. An example of the xml contents is:
 	#	<?xml version="1.0" encoding="UTF-8"?>
 	#	
 	#	<VersionInfo
@@ -483,7 +507,7 @@ CreateRestorePlusUpdateImage()
 	#		buttonsToHoldAtStartup="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 	#	/>
 
-	bootRestoreMD5=`md5sum restoreBoot.zip | awk '{print $1}'`
+	bootRestoreMD5=`md5sum bootRestore.zip | awk '{print $1}'`
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > .versioninfo.xml
 	echo -e "<VersionInfo\n\tproduct=\"${XMLProductName}\"\n\tversion=\"${ReleaseString}\"\n\tarchitecture=\"${Architecture}\"\n\tchecksum=\"${bootRestoreMD5}\"\n\tbuttonsToHoldAtStartup=\"${ButtonsToHold}\"\n/>" >> .versioninfo.xml
 
