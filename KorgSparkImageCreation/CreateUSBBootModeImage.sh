@@ -23,6 +23,7 @@ NewTarballMD5Sum=""
 RestoreZipFile=""
 ButtonsToHold=""
 InstructionsImageFile=""
+IncompatibleProducts=""
 
 # default the architecture to whatever is most common.
 Architecture="cm4"
@@ -171,7 +172,7 @@ SelectProduct()
 		1)
 			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm3"
 			SelectedProductName="Korg wavestate (CM3)"
-			XMLProductName="Korg wavestate"
+			XMLProductName="wavestate (original)"
 			UpdateRestoreFileName="Korg_wavestate_usbboot_"
 			Architecture="cm3"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdater_wavestateCM3"
@@ -182,6 +183,7 @@ SelectProduct()
 			FactoryUpdateBootFilesZipFile="wavestateCM3FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
+			IncompatibleProducts="wavestate SE, wavestate mkII"
 			;;
 		2)
 			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
@@ -194,6 +196,7 @@ SelectProduct()
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
+			IncompatibleProducts="wavestate (original), wavestate SE"
 			;;
 		3)
 			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
@@ -206,6 +209,7 @@ SelectProduct()
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
+			IncompatibleProducts="wavestate (original), wavestate mkII"
 			;;
 		4)
 			UpdatersFolder="$HOME/Development/Spark/Products/Wavest8/Util/Updaters/wavestate_cm4"
@@ -218,19 +222,21 @@ SelectProduct()
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
+			IncompatibleProducts="wavestate (original), wavestate mkII"
 			;;
 		5)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm3"
 			SelectedProductName="modwaveCM3"
-			XMLProductName="Korg modwave"
+			XMLProductName="modwave"
 			UpdateRestoreFileName="Korg_modwave_usbboot_"
 			Architecture="cm3"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/modwaveCM3/bootRestoremodwaveCM3.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
-			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
+			ButtonsToHold="HOLD, FILTER (ENVELOPE), FILTER TYPE"
 			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
+			IncompatibleProducts="modwave mkII"
 			;;
 		6)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm4"
@@ -241,8 +247,9 @@ SelectProduct()
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
 			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
-			ButtonsToHold="HOLD, FILTER EG, FILTER TYPE"
+			ButtonsToHold="HOLD, FILTER (ENVELOPE), FILTER TYPE"
 			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
+			IncompatibleProducts="modwave"
 			;;
 		7)
 			UpdatersFolder="$HOME/Development/Spark/Products/Mpx/Util/Updaters"
@@ -509,14 +516,15 @@ CreateRestorePlusUpdateImage()
 
 	bootRestoreMD5=`md5sum bootRestore.zip | awk '{print $1}'`
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > .versioninfo.xml
-	echo -e "<VersionInfo\n\tproduct=\"${XMLProductName}\"\n\tversion=\"${ReleaseString}\"\n\tarchitecture=\"${Architecture}\"\n\tchecksum=\"${bootRestoreMD5}\"\n\tbuttonsToHoldAtStartup=\"${ButtonsToHold}\"\n/>" >> .versioninfo.xml
+	echo -e "<VersionInfo\n\tproduct=\"${XMLProductName}\"\n\tincompatibleProducts=\"${IncompatibleProducts}\"\n\tversion=\"${ReleaseString}\"\n\tarchitecture=\"${Architecture}\"\n\tchecksum=\"${bootRestoreMD5}\"\n\tbuttonsToHoldAtStartup=\"${ButtonsToHold}\"\n/>" >> .versioninfo.xml
 
 	cd ..
-	zip -r ${UpdateRestoreFileName}${ReleaseString}.zip $ReleaseString
+	ReleaseStringWithUnderscores=`echo $ReleaseString | tr . _`
+	zip -r ${UpdateRestoreFileName}${ReleaseStringWithUnderscores}.zip $ReleaseString
 	popd
 
 	# move the result into its final resting place
-	mv $TempCreationFolder/${UpdateRestoreFileName}${ReleaseString}.zip output/
+	mv $TempCreationFolder/${UpdateRestoreFileName}${ReleaseStringWithUnderscores}.zip output/
 }
 
 # ---------------------------------------------------
