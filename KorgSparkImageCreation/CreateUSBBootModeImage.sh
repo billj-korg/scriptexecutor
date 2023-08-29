@@ -44,7 +44,7 @@ RlsDirsFile="/tmp/TempRlsDirs"
 SelectedRlsFile="/tmp/SparkPiUSBBootModeSelectedRls"
 TempCreationFolder="/tmp/SparkPiTempUSBBootModeRls"
 TempUpdateRootfsFolder="/tmp/SparkPiTempUSBBootModeRootfs"
-
+ReadMeFile="${ResourcesDir}/readme.txt"
 
 # dialog exit status codes
 : ${DIALOG_OK=0}
@@ -404,9 +404,10 @@ SelectPrePostTarScripts()
 # ---------------------------------------------------
 DeletePreviousUpdateContent()
 {
-	BuildRootUpdateContentPath="${CurrentBuildRootPath}/output/target/etc/updatecontent"
+	BuildRootOutputEtcPath="${CurrentBuildRootPath}/output/target/etc"
 	rm -fr $UpdateContentSourcePath
-	rm -fr $BuildRootUpdateContentPath
+	rm -fr $BuildRootUpdateContentPath/updatecontent"
+	rm -f $BuildRootUpdateContentPath/init.d/S99*"
 }
 
 # ---------------------------------------------------
@@ -436,6 +437,9 @@ CreateRestorePlusUpdateImage()
 	ScanProductUpdatersDirectories $UpdatersFolder
 	VerifySelectedFileExists "$RootfsFilePath" "Requires $RootfsFilePath"
 
+	ReleaseStringWithUnderscores=`echo $ReleaseString | tr . _`
+	TargetZipFileFolderName="${UpdateRestoreFileName}${ReleaseStringWithUnderscores}"
+
 	# start by deleting any previous updater content that might be cached
 	#	in the build root system and its source, and then remaking a blank
 	#	folder to receive the new update contents.
@@ -445,15 +449,15 @@ CreateRestorePlusUpdateImage()
 	# set up temp creation folders and put the boot restore content in place.
 	#	This will be used to add the factory update kernel and initramfs to the update content.
 	rm -fr $TempCreationFolder
-	mkdir -p $TempCreationFolder/$ReleaseString
+	mkdir -p $TempCreationFolder/$TargetZipFileFolderName
 	rm -fr $TempUpdateRootfsFolder
 	mkdir -p $TempUpdateRootfsFolder/boot
 
 	# give the option for pre/post tar scripts to be included in the update
 	SelectPrePostTarScripts
 
-	cp $RestoreZipFile $TempCreationFolder/$ReleaseString
-	pushd $TempCreationFolder/$ReleaseString
+	cp $RestoreZipFile $TempCreationFolder/$TargetZipFileFolderName
+	pushd $TempCreationFolder/$TargetZipFileFolderName
 	unzip $RestoreZipFile &>> $LogFile
 		# get rid of the extraneous zip file now that we've put its contents in place
 	ZipFileToRemove=`basename $RestoreZipFile`
@@ -463,8 +467,8 @@ CreateRestorePlusUpdateImage()
 	# move the selected update version's rootfs into a temporary location and add the 
 	#	factory scriptexecute and kernel files into the boot location.
 	tar xzvf $RootfsFilePath -C $TempUpdateRootfsFolder &>> $LogFile
-	cp $TempCreationFolder/$ReleaseString/$TargetUpdaterKernelFileName $TempUpdateRootfsFolder/boot
-	cp $TempCreationFolder/$ReleaseString/$TargetUpdaterInitRamFSFileName $TempUpdateRootfsFolder/boot
+	cp $TempCreationFolder/$TargetZipFileFolderName/$TargetUpdaterKernelFileName $TempUpdateRootfsFolder/boot
+	cp $TempCreationFolder/$TargetZipFileFolderName/$TargetUpdaterInitRamFSFileName $TempUpdateRootfsFolder/boot
 
 	# retar the rootfs.tgz with the requisite /boot contents
 	pushd $TempUpdateRootfsFolder
@@ -480,27 +484,27 @@ CreateRestorePlusUpdateImage()
 
 	# copy the correct script file into the source location and then run build root to
 	#	build the updater kernel and its initramfs
-	cp $S99UpdateScriptFile $EtcSourcePath/S99scriptexecute
+	cp $S99UpdateScriptFile $EtcSourcePath/init.d/S99scriptexecute
 
 	pushd ..
 	sh build.sh
 
 	# copy the generated kernel and its initramfs to the restore contents folder
-	mkdir -p $TempCreationFolder
-	cp output/kernel.img $TempCreationFolder/$ReleaseString/$TargetUpdaterKernelFileName
-	cp output/scriptexecute.img $TempCreationFolder/$ReleaseString/$TargetUpdaterInitRamFSFileName
+	cp output/kernel.img $TempCreationFolder/$TargetZipFileFolderName/$TargetUpdaterKernelFileName
+	cp output/scriptexecute.img $TempCreationFolder/$TargetZipFileFolderName/$TargetUpdaterInitRamFSFileName
 	popd
 
 	# generate the update/restore payload
-	pushd $TempCreationFolder/$ReleaseString
+	pushd $TempCreationFolder/$TargetZipFileFolderName
 	zip -r bootRestore.zip .
 	# clear out the rest of the contents for creating the final zip file.
 	mv bootRestore.zip ..
 	rm -fr *
 	mv ../bootRestore.zip .
 
-	# next to the bootRestore.zip file is also an image 
+	# next to the bootRestore.zip file is also an image and the readme.txt file.
 	cp $InstructionsImageFile ./InstructionsImage.png 
+	cp $ReadMeFile ./readme.txt
 
 	# now wrap the bootRestore.zip in a zip with an xml info file. An example of the xml contents is:
 	#	<?xml version="1.0" encoding="UTF-8"?>
@@ -519,12 +523,11 @@ CreateRestorePlusUpdateImage()
 	echo -e "<UsbBootVersionInfo\n\tproduct=\"${XMLProductName}\"\n\tincompatibleProducts=\"${IncompatibleProducts}\"\n\tversion=\"${ReleaseString}\"\n\tarchitecture=\"${Architecture}\"\n\tchecksum=\"${bootRestoreMD5}\"\n\tbuttonsToHoldAtStartup=\"${ButtonsToHold}\"\n/>" >> .versioninfo.xml
 
 	cd ..
-	ReleaseStringWithUnderscores=`echo $ReleaseString | tr . _`
-	zip -r ${UpdateRestoreFileName}${ReleaseStringWithUnderscores}.zip $ReleaseString
+	zip -r ${TargetZipFileFolderName}.zip $TargetZipFileFolderName
 	popd
 
 	# move the result into its final resting place
-	mv $TempCreationFolder/${UpdateRestoreFileName}${ReleaseStringWithUnderscores}.zip output/
+	mv $TempCreationFolder/${TargetZipFileFolderName}.zip output/
 }
 
 # ---------------------------------------------------
@@ -538,7 +541,7 @@ CreateFactoryUpdaterKernelAndInitramfs()
 
 	# copy the correct script file into the source location and then run build root to
 	#	build the factory update kernel and its initramfs
-	cp $S99FactoryScriptFile $EtcSourcePath/S99scriptexecute
+	cp $S99FactoryScriptFile $EtcSourcePath/init.d/S99scriptexecute
 
 	TargetZip=$PWD/output/$FactoryUpdateBootFilesZipFile
 	pushd ..
