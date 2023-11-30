@@ -154,10 +154,11 @@ SelectProduct()
 		"3" "wavestate SE" \
 		"4" "wavestate module" \
 		"5" "modwave CM3" \
-		"6" "modwave CM4" \
-		"7" "multipoly" \
-		"8" "opsix CM3" \
-		"9" "opsix mkII" \
+		"6" "modwave mkII" \
+		"7" "modwave module" \
+		"8" "multipoly" \
+		"9" "opsix CM3" \
+		"10" "opsix mkII" \
 		2> $ProductSelectionFile
 
 	response=$?
@@ -240,7 +241,7 @@ SelectProduct()
 			;;
 		6)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm4"
-			SelectedProductName="modwaveCM4"
+			SelectedProductName="modwave mkII"
 			XMLProductName="modwave mkII"
 			UpdateRestoreFileName="modwave_mkII_usb_boot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
@@ -252,18 +253,31 @@ SelectProduct()
 			IncompatibleProducts="modwave"
 			;;
 		7)
+			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm4"
+			SelectedProductName="modwave module"
+			XMLProductName="modwave module"
+			UpdateRestoreFileName="modwave_module_usb_boot_"
+			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
+			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
+			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4.zip"
+			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
+			ButtonsToHold="HOLD, FILTER (ENVELOPE), FILTER TYPE"
+			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
+			IncompatibleProducts="modwave"
+			;;
+		8)
 			UpdatersFolder="$HOME/Development/Spark/Products/Mpx/Util/Updaters"
 			SelectedProductName="multipoly"
 			XMLProductName="multipoly"
 			UpdateRestoreFileName="multipoly_usb_boot_"
-			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
-			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
+			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1Debug"
+			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1Debug"
 			RestoreZipFile="$ResourcesDir/multipolyCM4/bootRestoremultipolyCM4.zip"
 			FactoryUpdateBootFilesZipFile="multipolyFactoryUpdateBootFiles.zip"
 			ButtonsToHold="UTIL"
 			InstructionsImageFile="$ResourcesDir/images/multipolyUSBBootButtons.png"
 			;;
-		8)
+		9)
 			UpdatersFolder="$HOME/Development/Spark/Products/Operator6/Util/Updaters"
 			SelectedProductName="opsix CM3"
 			XMLProductName="Korg opsix"
@@ -275,7 +289,7 @@ SelectProduct()
 			FactoryUpdateBootFilesZipFile="opsixCM3FactoryUpdateBootFiles.zip"
 			InstructionsImageFile="$ResourcesDir/images/opsixUSBBootButtons.png"
 			;;
-		9)
+		10)
 			UpdatersFolder="$HOME/Development/Spark/Products/Operator6/Util/Updaters"
 			SelectedProductName="opsixMkII"
 			XMLProductName="opsix mkII"
@@ -551,6 +565,7 @@ CreateFactoryUpdaterKernelAndInitramfs()
 	cp output/scriptexecute.img $TempCreationFolder/$TargetUpdaterInitRamFSFileName
 	pushd $TempCreationFolder
 	zip -r $TargetZip .
+
 	popd
 }
 
