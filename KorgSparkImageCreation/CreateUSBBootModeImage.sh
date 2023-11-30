@@ -193,7 +193,7 @@ SelectProduct()
 			UpdateRestoreFileName="wavestate_mkII_usb_boot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
-			RestoreZipFile="$ResourcesDir/wavestateMkII/bootRestoreWavestateMkII.zip"
+			RestoreZipFile="$ResourcesDir/wavestateMkII/bootRestoreWavestateMkIINewKernel.zip"
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
@@ -206,7 +206,7 @@ SelectProduct()
 			UpdateRestoreFileName="wavestate_SE_usb_boot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
-			RestoreZipFile="$ResourcesDir/commonCM4/bootRestoreCM4.zip"
+			RestoreZipFile="$ResourcesDir/commonCM4/bootRestoreNewKernelCM4.zip"
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
@@ -219,7 +219,7 @@ SelectProduct()
 			UpdateRestoreFileName="wavestate_module_usb_boot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
-			RestoreZipFile="$ResourcesDir/commonCM4/bootRestoreCM4.zip"
+			RestoreZipFile="$ResourcesDir/commonCM4/bootRestoreNewKernelCM4.zip"
 			FactoryUpdateBootFilesZipFile="wavestateCM4FactoryUpdateBootFiles.zip"
 			ButtonsToHold="PERFORMANCE MOD KNOBS, MASTER, NOTE ADVANCE"
 			InstructionsImageFile="$ResourcesDir/images/wavestateUSBBootButtons.png"
@@ -246,7 +246,7 @@ SelectProduct()
 			UpdateRestoreFileName="modwave_mkII_usb_boot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
-			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4.zip"
+			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4NewKernel.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER (ENVELOPE), FILTER TYPE"
 			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
@@ -259,7 +259,7 @@ SelectProduct()
 			UpdateRestoreFileName="modwave_module_usb_boot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
-			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4.zip"
+			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveNewKernelCM4.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER (ENVELOPE), FILTER TYPE"
 			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
@@ -483,6 +483,12 @@ CreateRestorePlusUpdateImage()
 	tar xzvf $RootfsFilePath -C $TempUpdateRootfsFolder &>> $LogFile
 	cp $TempCreationFolder/$TargetZipFileFolderName/$TargetUpdaterKernelFileName $TempUpdateRootfsFolder/boot
 	cp $TempCreationFolder/$TargetZipFileFolderName/$TargetUpdaterInitRamFSFileName $TempUpdateRootfsFolder/boot
+
+	# ISSUE #4676 !!! We have to remove the new kernel that is now part of updates moving forward. We
+	#	rely on the fact that this new kernel is in the bootRestore.zip file that will be written to the
+	#	boot partition directly. We need to remove it for size issues so that the KUBU update payload can
+	#	actually fit in the boot partition.
+	rm -f $TempUpdateRootfsFolder/boot/kernel8.img
 
 	# retar the rootfs.tgz with the requisite /boot contents
 	pushd $TempUpdateRootfsFolder
