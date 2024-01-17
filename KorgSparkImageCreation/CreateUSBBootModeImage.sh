@@ -228,7 +228,7 @@ SelectProduct()
 		5)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm3"
 			SelectedProductName="modwaveCM3"
-			XMLProductName="modwave"
+			XMLProductName="modwave (original)"
 			UpdateRestoreFileName="modwave_usb_boot_"
 			Architecture="cm3"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
@@ -237,7 +237,7 @@ SelectProduct()
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER (ENVELOPE), FILTER TYPE"
 			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
-			IncompatibleProducts=""
+			IncompatibleProducts="modwave mkII, modwave module"
 			;;
 		6)
 			UpdatersFolder="$HOME/Development/Spark/Products/Dwx/Util/Updaters/modwave_cm4"
@@ -259,7 +259,7 @@ SelectProduct()
 			UpdateRestoreFileName="modwave_module_usb_boot_"
 			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
 			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
-			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveNewKernelCM4.zip"
+			RestoreZipFile="$ResourcesDir/modwaveCM4/bootRestoremodwaveCM4NewKernel.zip"
 			FactoryUpdateBootFilesZipFile="modwaveFactoryUpdateBootFiles.zip"
 			ButtonsToHold="HOLD, FILTER (ENVELOPE), FILTER TYPE"
 			InstructionsImageFile="$ResourcesDir/images/modwaveUSBBootButtons.png"
@@ -503,7 +503,9 @@ CreateRestorePlusUpdateImage()
 	CreateInstallInfoForUpdateContent
 
 	# copy the correct script file into the source location and then run build root to
-	#	build the updater kernel and its initramfs
+	#	build the updater kernel and its initramfs. Remove any previous ones first so that we
+	#	don't inadvertently run prior scripts!
+	rm -f $EtcSourcePath/init.d/*
 	cp $S99UpdateScriptFile $EtcSourcePath/init.d/S99scriptexecute
 
 	pushd ..
