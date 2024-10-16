@@ -159,6 +159,7 @@ SelectProduct()
 		"8" "multipoly" \
 		"9" "opsix CM3" \
 		"10" "opsix mkII" \
+		"11" "multipoly module" \
 		2> $ProductSelectionFile
 
 	response=$?
@@ -270,11 +271,11 @@ SelectProduct()
 			SelectedProductName="multipoly"
 			XMLProductName="multipoly"
 			UpdateRestoreFileName="multipoly_usb_boot_"
-			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1Debug"
-			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1Debug"
-			RestoreZipFile="$ResourcesDir/multipolyCM4/bootRestoremultipolyCM4.zip"
-			FactoryUpdateBootFilesZipFile="multipolyFactoryUpdateBootFiles.zip"
-			ButtonsToHold="UTIL"
+			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
+			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
+			RestoreZipFile="$ResourcesDir/multipolyCM4/bootRestoremultipolyCM4_v3.zip"
+			FactoryUpdateBootFilesZipFile="multipolyFactoryUpdateBootFiles_v2.zip"
+			ButtonsToHold="UTILITY, TAP TEMPO"
 			InstructionsImageFile="$ResourcesDir/images/multipolyUSBBootButtons.png"
 			;;
 		9)
@@ -299,6 +300,18 @@ SelectProduct()
 			RestoreZipFile="$ResourcesDir/opsixCM4/bootRestoreopsixCM4.zip"
 			FactoryUpdateBootFilesZipFile="opsixCM4FactoryUpdateBootFiles.zip"
 			InstructionsImageFile="$ResourcesDir/images/opsixUSBBootButtons.png"
+			;;
+		11)
+			UpdatersFolder="$HOME/Development/Spark/Products/Mpx/Util/Updaters"
+			SelectedProductName="multipoly module"
+			XMLProductName="multipoly module"
+			UpdateRestoreFileName="multipoly_module_usb_boot_"
+			S99UpdateScriptFile="$ResourcesDir/scripts/S99scriptexecUpdaterV1"
+			S99FactoryScriptFile="$ResourcesDir/scripts/S99FactoryScriptExecV1"
+			RestoreZipFile="$ResourcesDir/multipolyCM4/bootRestoremultipolyCM4_v3.zip"
+			FactoryUpdateBootFilesZipFile="multipolyFactoryUpdateBootFiles_v2.zip"
+			ButtonsToHold="UTILITY, TAP TEMPO"
+			InstructionsImageFile="$ResourcesDir/images/multipolyUSBBootButtons.png"
 			;;
 	esac
 }
